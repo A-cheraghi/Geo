@@ -124,6 +124,19 @@ class MonoDGP(nn.Module):
             self.depthaware_transformer.decoder.bbox_embed = None
 
 
+
+
+
+        self.fusion_mlp = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256)
+        )
+        self.depth_correction = nn.Linear(256, 1)
+        self.dim_correction = nn.Linear(256, 3)
+        self.angle_correction = nn.Linear(256, 24)
+        self.box_correction = nn.Linear(256, 6)
+
     def forward(self, images, calibs, targets, img_sizes, dn_args=None):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
@@ -165,17 +178,9 @@ class MonoDGP(nn.Module):
         srcs = enhanced_srcs
         pred_depth_map_logits, depth_pos_embed, weighted_depth = self.depth_predictor(srcs, masks[1], seg_embed[1] + pos[1])
         
-        #pos_3d = []
-        # for l, feat in enumerate(features):
-        #     depth_pos_3d = self.position_embed(feat, calibs=None, depth_map = pred_depth_map_logits)
-        #     pos[l] = depth_pos_3d
-        #pos = pos_3d
-
         intermediate_output = self.det2d_transformer(srcs, masks, pos, query_embeds)
         
         hs_2d = intermediate_output['hs']
-        print("hs_2d shape:", hs_2d.shape)
-        print("hs_2d dtype:", hs_2d.dtype)
         init_reference_2d = intermediate_output['init_reference_out']
         inter_references_2d = intermediate_output['inter_references_out']
         
@@ -209,9 +214,7 @@ class MonoDGP(nn.Module):
 
         query_embeds = hs_2d[-1]
         hs, init_reference, inter_references = self.det3d_transformer(intermediate_output, query_embeds, depth_pos_embed)
-        print("hs_3d shape:", hs.shape)
-        print("hs_3d dtype:", hs.dtype)
-
+    
         outputs_coords = []
         outputs_classes = []
         outputs_3d_dims = []       
@@ -234,7 +237,6 @@ class MonoDGP(nn.Module):
 
             # 3d center + 2d box
             outputs_coord = tmp.sigmoid()
-            print("outputs_coord shape:", outputs_coord.shape)
             outputs_coords.append(outputs_coord)
 
             # classes
@@ -247,23 +249,12 @@ class MonoDGP(nn.Module):
 
             # depth_geo_err
             depth_geo_err = self.depth_embed[lvl](hs[lvl])
-            print("depth_geo_err shape:", depth_geo_err.shape)
             
             # depth_geo
             box2d_height_norm = outputs_coord[:, :, 4] + outputs_coord[:, :, 5]
             box2d_height = torch.clamp(box2d_height_norm * img_sizes[:, 1: 2], min=1.0)
             depth_geo = size3d[:, :, 0]/ box2d_height * calibs[:, 0, 0].unsqueeze(1)
             
-            # depth_map
-            # outputs_center3d = ((outputs_coord[..., :2] - 0.5) * 2).unsqueeze(2)   #.detach()
-            # depth_map = F.grid_sample(
-            #     weighted_depth.unsqueeze(1),
-            #     outputs_center3d,
-            #     mode='bilinear',
-            #     align_corners=True).squeeze(1)    
-            
-            # depth average + sigma
-            # depth_ave = torch.cat([( (1. / (depth_reg[:, :, 0: 1].sigmoid() + 1e-6) - 1.) + depth_geo.unsqueeze(-1) + depth_map) / 3,
             
             depth_ave = torch.cat([depth_geo.unsqueeze(-1) + depth_geo_err[:, :, 0: 1],          
                                     depth_geo_err[:, :, 1: 2]], -1)
@@ -289,12 +280,45 @@ class MonoDGP(nn.Module):
         out['pred_depth_map_logits'] = pred_depth_map_logits
         out['pred_region_prob'] = region_probs
 
+
+
+        hs_2d_last = hs_2d[-1]
+        hs_3d_last = hs[-1]
+
+        fusion = torch.cat([hs_2d_last, hs_3d_last], dim=-1)
+
+        fusion_feature = self.fusion_mlp(fusion)
+
+
+        # box correction
+        box_corr = self.box_correction(fusion_feature)
+        out['pred_boxes'] = out['pred_boxes'] + box_corr
+
+
+        # dimension correction
+        dim_corr = self.dim_correction(fusion_feature)
+        out['pred_3d_dim'] = out['pred_3d_dim'] + dim_corr
+
+
+        # depth correction
+        depth_corr = self.depth_correction(fusion_feature)
+        out['pred_depth'][:, :, 0:1] += depth_corr
+
+
+        # angle correction
+        angle_corr = self.angle_correction(fusion_feature)
+        out['pred_angle'] = out['pred_angle'] + angle_corr
+
+
+
+
+
+
         out['inter_outputs'] = self._set_inter_loss(inter_class, inter_coord)
         
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(
                 outputs_class, outputs_coord, outputs_3d_dim, outputs_angle, outputs_depth) 
-        print("depth_geo_err shape:", depth_geo_err.shape)
         
         return out
 
