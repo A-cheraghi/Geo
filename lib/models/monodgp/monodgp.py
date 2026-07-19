@@ -174,6 +174,8 @@ class MonoDGP(nn.Module):
         intermediate_output = self.det2d_transformer(srcs, masks, pos, query_embeds)
         
         hs_2d = intermediate_output['hs']
+        print("hs_2d shape:", hs_2d.shape)
+        print("hs_2d dtype:", hs_2d.dtype)
         init_reference_2d = intermediate_output['init_reference_out']
         inter_references_2d = intermediate_output['inter_references_out']
         
@@ -207,6 +209,8 @@ class MonoDGP(nn.Module):
 
         query_embeds = hs_2d[-1]
         hs, init_reference, inter_references = self.det3d_transformer(intermediate_output, query_embeds, depth_pos_embed)
+        print("hs_3d shape:", hs.shape)
+        print("hs_3d dtype:", hs.dtype)
 
         outputs_coords = []
         outputs_classes = []
@@ -230,6 +234,7 @@ class MonoDGP(nn.Module):
 
             # 3d center + 2d box
             outputs_coord = tmp.sigmoid()
+            print("outputs_coord shape:", outputs_coord.shape)
             outputs_coords.append(outputs_coord)
 
             # classes
@@ -242,6 +247,7 @@ class MonoDGP(nn.Module):
 
             # depth_geo_err
             depth_geo_err = self.depth_embed[lvl](hs[lvl])
+            print("depth_geo_err shape:", depth_geo_err.shape)
             
             # depth_geo
             box2d_height_norm = outputs_coord[:, :, 4] + outputs_coord[:, :, 5]
@@ -288,6 +294,7 @@ class MonoDGP(nn.Module):
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(
                 outputs_class, outputs_coord, outputs_3d_dim, outputs_angle, outputs_depth) 
+        print("depth_geo_err shape:", depth_geo_err.shape)
         
         return out
 
