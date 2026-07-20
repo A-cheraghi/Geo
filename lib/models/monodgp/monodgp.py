@@ -215,7 +215,11 @@ class MonoDGP(nn.Module):
         query_embeds = hs_2d[-1]
         hs, init_reference, inter_references = self.det3d_transformer(intermediate_output, query_embeds, depth_pos_embed)
     
+        # outputs_coords = []
+
         outputs_coords = []
+        outputs_coord_logits_list = []
+
         outputs_classes = []
         outputs_3d_dims = []       
         outputs_depths = []
@@ -236,8 +240,14 @@ class MonoDGP(nn.Module):
                 tmp[..., :2] += reference
 
             # 3d center + 2d box
+            # outputs_coord = tmp.sigmoid()
+            # outputs_coords.append(outputs_coord)
+
+            outputs_coord_logits = tmp
             outputs_coord = tmp.sigmoid()
+
             outputs_coords.append(outputs_coord)
+            outputs_coord_logits_list.append(outputs_coord_logits)
 
             # classes
             outputs_class = self.class_embed[lvl](hs[lvl])
@@ -265,7 +275,11 @@ class MonoDGP(nn.Module):
             outputs_angle = self.angle_embed[lvl](hs[lvl])
             outputs_angles.append(outputs_angle)
 
+        # outputs_coord = torch.stack(outputs_coords)
+
         outputs_coord = torch.stack(outputs_coords)
+        outputs_coord_logits = torch.stack(outputs_coord_logits_list)
+
         outputs_class = torch.stack(outputs_classes)
         outputs_3d_dim = torch.stack(outputs_3d_dims)
         outputs_depth = torch.stack(outputs_depths) 
@@ -292,7 +306,8 @@ class MonoDGP(nn.Module):
 
         # box correction
         box_corr = self.box_correction(fusion_feature)
-        out['pred_boxes'] = out['pred_boxes'] + box_corr
+        box_logits = outputs_coord_logits[-1]
+        out['pred_boxes'] = (box_logits + box_corr).sigmoid()
 
 
         # dimension correction
