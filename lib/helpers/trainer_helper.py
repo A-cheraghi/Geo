@@ -62,6 +62,50 @@ class Trainer(object):
             self.lr_scheduler.last_epoch = self.epoch - 1
             self.logger.info("Loading Checkpoint... Best Result:{}, Best Epoch:{}".format(self.best_result, self.best_epoch))
         
+        
+        
+        
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        for param in self.model.fusion_mlp.parameters():
+            param.requires_grad = True
+
+        for param in self.model.box_correction.parameters():
+            param.requires_grad = True
+
+        for param in self.model.dim_correction.parameters():
+            param.requires_grad = True
+
+        for param in self.model.depth_correction.parameters():
+            param.requires_grad = True
+
+        for param in self.model.angle_correction.parameters():
+            param.requires_grad = True
+
+        print("\n========== Trainable Parameters ==========")
+
+        total = 0
+        trainable = 0
+
+        for name, param in self.model.named_parameters():
+            num = param.numel()
+            total += num
+
+            if param.requires_grad:
+                trainable += num
+                print(f"[Train] {name:60s} {tuple(param.shape)}")
+            else:
+                print(f"[Freeze] {name:60s} {tuple(param.shape)}")
+
+        print("------------------------------------------")
+        print("Total Params     :", total)
+        print("Trainable Params :", trainable)
+        print("Frozen Params    :", total - trainable)
+        print("==========================================")
+
+
+        
     def train(self):
         start_epoch = self.epoch
 

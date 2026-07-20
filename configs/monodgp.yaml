@@ -105,8 +105,8 @@ trainer:
   max_epoch: 250
   gpu_ids: '1'
   save_frequency: 1  # checkpoint save interval (in epoch)
-  #resume_model: True
-  #pretrain_model: path/to/ckpt
+  # resume_model: True
+  pretrain_model: 'outputs/'
   save_path: 'outputs/'
   save_all: False  # False for only savng the best and latest ckpts
   use_dn: False
