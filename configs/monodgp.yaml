@@ -106,7 +106,7 @@ trainer:
   gpu_ids: '1'
   save_frequency: 1  # checkpoint save interval (in epoch)
   # resume_model: True
-  pretrain_model: 'outputs/monodgp/checkpoint_best.pt'
+  pretrain_model: 'outputs/monodgp/checkpoint_best.pth'
   save_path: 'outputs/'
   save_all: False  # False for only savng the best and latest ckpts
   use_dn: False

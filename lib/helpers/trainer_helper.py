@@ -83,26 +83,26 @@ class Trainer(object):
         for param in self.model.angle_correction.parameters():
             param.requires_grad = True
 
-        self.logger.info("\n========== Trainable Parameters ==========")
+        # self.logger.info("\n========== Trainable Parameters ==========")
 
-        total = 0
-        trainable = 0
+        # total = 0
+        # trainable = 0
 
-        for name, param in self.model.named_parameters():
-            num = param.numel()
-            total += num
+        # for name, param in self.model.named_parameters():
+        #     num = param.numel()
+        #     total += num
 
-            if param.requires_grad:
-                trainable += num
-                self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
-            else:
-                self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
+        #     if param.requires_grad:
+        #         trainable += num
+        #         self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
+        #     else:
+        #         self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
 
-        self.logger.info("------------------------------------------")
-        self.logger.info("Total Params     :", total)
-        self.logger.info("Trainable Params :", trainable)
-        self.logger.info("Frozen Params    :", total - trainable)
-        self.logger.info("==========================================")
+        # self.logger.info("------------------------------------------")
+        # self.logger.info("Total Params     :", total)
+        # self.logger.info("Trainable Params :", trainable)
+        # self.logger.info("Frozen Params    :", total - trainable)
+        # self.logger.info("==========================================")
 
 
         
