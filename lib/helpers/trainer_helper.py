@@ -83,22 +83,22 @@ class Trainer(object):
         for param in self.model.angle_correction.parameters():
             param.requires_grad = True
 
-        self.logger.info("\n========== Trainable Parameters ==========")
-        total = 0
-        trainable = 0
-        for name, param in self.model.named_parameters():
-            num = param.numel()
-            total += num
-            if param.requires_grad:
-                trainable += num
-                self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
-            else:
-                self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
-        self.logger.info("------------------------------------------")
-        self.logger.info(f"Total Params     : {total}")
-        self.logger.info(f"Trainable Params : {trainable}")
-        self.logger.info(f"Frozen Params    : {total - trainable}")
-        self.logger.info("==========================================")
+        # self.logger.info("\n========== Trainable Parameters ==========")
+        # total = 0
+        # trainable = 0
+        # for name, param in self.model.named_parameters():
+        #     num = param.numel()
+        #     total += num
+        #     if param.requires_grad:
+        #         trainable += num
+        #         self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
+        #     else:
+        #         self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
+        # self.logger.info("------------------------------------------")
+        # self.logger.info(f"Total Params     : {total}")
+        # self.logger.info(f"Trainable Params : {trainable}")
+        # self.logger.info(f"Frozen Params    : {total - trainable}")
+        # self.logger.info("==========================================")
 
 
         
@@ -208,8 +208,8 @@ class Trainer(object):
 
             detr_losses.backward()
             self.optimizer.step()
-
-            progress_bar.update()
+            if (batch_idx % 200 ==0):
+                progress_bar.update()
         progress_bar.close()
 
     def prepare_targets(self, targets, batch_size):
