@@ -98,7 +98,7 @@ class Tester(object):
                 threshold=self.cfg.get('threshold', 0.2))
 
             results.update(dets)
-            if batch_idx % 200 == 0:
+            if batch_idx > 0 and batch_idx % 200 == 0:
                 progress_bar.update(200)
 
         print("inference on {} images by {}/per image".format(
