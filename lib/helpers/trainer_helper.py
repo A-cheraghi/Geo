@@ -83,7 +83,7 @@ class Trainer(object):
         for param in self.model.angle_correction.parameters():
             param.requires_grad = True
 
-        print("\n========== Trainable Parameters ==========")
+        self.logger.info("\n========== Trainable Parameters ==========")
 
         total = 0
         trainable = 0
@@ -94,15 +94,15 @@ class Trainer(object):
 
             if param.requires_grad:
                 trainable += num
-                print(f"[Train] {name:60s} {tuple(param.shape)}")
+                self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
             else:
-                print(f"[Freeze] {name:60s} {tuple(param.shape)}")
+                self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
 
-        print("------------------------------------------")
-        print("Total Params     :", total)
-        print("Trainable Params :", trainable)
-        print("Frozen Params    :", total - trainable)
-        print("==========================================")
+        self.logger.info("------------------------------------------")
+        self.logger.info("Total Params     :", total)
+        self.logger.info("Trainable Params :", trainable)
+        self.logger.info("Frozen Params    :", total - trainable)
+        self.logger.info("==========================================")
 
 
         
