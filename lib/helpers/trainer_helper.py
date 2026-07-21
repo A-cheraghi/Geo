@@ -65,23 +65,42 @@ class Trainer(object):
         
         
         
+        # freeze everything
         for param in self.model.parameters():
             param.requires_grad = False
 
-        for param in self.model.fusion_mlp.parameters():
-            param.requires_grad = True
+        # unfreeze correction network
+        train_modules = [
+            self.model.fusion_mlp,
+            self.model.box_correction,
+            self.model.dim_correction,
+            self.model.depth_correction,
+            self.model.angle_correction
+        ]
+        for module in train_modules:
+            for param in module.parameters():
+                param.requires_grad = True
 
-        for param in self.model.box_correction.parameters():
-            param.requires_grad = True
 
-        for param in self.model.dim_correction.parameters():
-            param.requires_grad = True
+        if cfg.get('pretrain_model') and not cfg.get('resume_model'):
+            correction_heads = [
+                self.model.box_correction,
+                self.model.dim_correction,
+                self.model.depth_correction,
+                self.model.angle_correction
+            ]
+            for head in correction_heads:
 
-        for param in self.model.depth_correction.parameters():
-            param.requires_grad = True
+                # آخرین Linear را پیدا کن
+                linear_layers = [
+                    m for m in head.modules()
+                    if isinstance(m, nn.Linear)
+                ]
+                last_layer = linear_layers[-1]
+                nn.init.zeros_(last_layer.weight)
+                nn.init.zeros_(last_layer.bias)     
+            self.logger.info("Correction heads last layers weights and biases initialized to zero.")
 
-        for param in self.model.angle_correction.parameters():
-            param.requires_grad = True
 
         # self.logger.info("\n========== Trainable Parameters ==========")
         # total = 0
@@ -99,6 +118,14 @@ class Trainer(object):
         # self.logger.info(f"Trainable Params : {trainable}")
         # self.logger.info(f"Frozen Params    : {total - trainable}")
         # self.logger.info("==========================================")
+
+        trainable = 0
+        for name,param in model.named_parameters():
+            if param.requires_grad:
+                self.logger.info(name)
+                trainable += param.numel()
+
+        self.logger.info(trainable)
 
 
         

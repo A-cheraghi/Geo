@@ -127,15 +127,50 @@ class MonoDGP(nn.Module):
 
 
 
+        # self.fusion_mlp = nn.Sequential(
+        #     nn.Linear(512, 256),
+        #     nn.ReLU(),
+        #     nn.Linear(256, 256)
+        # )
+        # self.depth_correction = nn.Linear(256, 1)
+        # self.dim_correction = nn.Linear(256, 3)
+        # self.angle_correction = nn.Linear(256, 24)
+        # self.box_correction = nn.Linear(256, 6)
+
+
         self.fusion_mlp = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(),
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Linear(256, 256)
         )
-        self.depth_correction = nn.Linear(256, 1)
-        self.dim_correction = nn.Linear(256, 3)
-        self.angle_correction = nn.Linear(256, 24)
-        self.box_correction = nn.Linear(256, 6)
+        self.box_correction = nn.Sequential(
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 6)
+        )
+        self.dim_correction = nn.Sequential(
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 3)
+        )
+        self.depth_correction = nn.Sequential(
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+        self.angle_correction = nn.Sequential(
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 24)
+        )
+        
+
+
+
 
     def forward(self, images, calibs, targets, img_sizes, dn_args=None):
         """ The forward expects a NestedTensor, which consists of:
