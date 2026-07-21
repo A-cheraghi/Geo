@@ -110,7 +110,7 @@ trainer:
   save_frequency: 1  # checkpoint save interval (in epoch)
   # resume_model: True
   pretrain_model: 'outputs/monodgp/checkpoint_best.pth'
-  save_path: '/content/drive/MyDrive/outputs'
+  save_path: '../drive/MyDrive/outputs'
   save_all: False  # False for only savng the best and latest ckpts
   use_dn: False
   scalar: 5
