@@ -126,47 +126,18 @@ class MonoDGP(nn.Module):
 
 
 
-
-        # self.fusion_mlp = nn.Sequential(
-        #     nn.Linear(512, 256),
-        #     nn.ReLU(),
-        #     nn.Linear(256, 256)
-        # )
-        # self.depth_correction = nn.Linear(256, 1)
-        # self.dim_correction = nn.Linear(256, 3)
-        # self.angle_correction = nn.Linear(256, 24)
-        # self.box_correction = nn.Linear(256, 6)
-
-
-        self.fusion_mlp = nn.Sequential(
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256)
-        )
-        self.box_correction = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 6)
-        )
-        self.dim_correction = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 3)
-        )
-        self.depth_correction = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 1)
-        )
-        self.angle_correction = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 24)
-        )
+            self.fusion_mlp = nn.Sequential(
+                nn.Linear(hidden_dim * 2, hidden_dim * 2),
+                nn.ReLU(),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim)
+            )
+        self.class_correction = nn.Linear(hidden_dim, num_classes)
+        self.box_correction = MLP(hidden_dim, hidden_dim, 6, 3)
+        self.dim_correction = MLP(hidden_dim, hidden_dim, 3, 2)
+        self.angle_correction = MLP(hidden_dim, hidden_dim, 24, 2)        
+        self.depth_correction = MLP(hidden_dim, hidden_dim, 2, 2)
         
 
 
@@ -331,33 +302,33 @@ class MonoDGP(nn.Module):
 
 
 
+
         hs_2d_last = hs_2d[-1]
         hs_3d_last = hs[-1]
 
         fusion = torch.cat([hs_2d_last, hs_3d_last], dim=-1)
-
         fusion_feature = self.fusion_mlp(fusion)
-
 
         # box correction
         box_corr = self.box_correction(fusion_feature)
         box_logits = outputs_coord_logits[-1]
         out['pred_boxes'] = (box_logits + box_corr).sigmoid()
 
-
         # dimension correction
         dim_corr = self.dim_correction(fusion_feature)
         out['pred_3d_dim'] = out['pred_3d_dim'] + dim_corr
 
-
         # depth correction
         depth_corr = self.depth_correction(fusion_feature)
-        out['pred_depth'][:, :, 0:1] += depth_corr
-
+        out['pred_depth'] = out['pred_depth'] + depth_corr
 
         # angle correction
         angle_corr = self.angle_correction(fusion_feature)
         out['pred_angle'] = out['pred_angle'] + angle_corr
+
+        # class correction
+        class_corr = self.class_correction(fusion_feature)
+        out['pred_logits'] = out['pred_logits'] + class_corr
 
 
 

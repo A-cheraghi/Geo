@@ -64,34 +64,35 @@ class Trainer(object):
         
         
         
-        
-        # freeze everything
+        # Freeze the whole pretrained network
         for param in self.model.parameters():
             param.requires_grad = False
 
-        # unfreeze correction network
+        # Enable training only for the correction network
         train_modules = [
             self.model.fusion_mlp,
             self.model.box_correction,
             self.model.dim_correction,
             self.model.depth_correction,
-            self.model.angle_correction
+            self.model.angle_correction,
+            self.model.class_correction
         ]
         for module in train_modules:
             for param in module.parameters():
                 param.requires_grad = True
 
-
+        # Initialize correction heads with zero output only for the first training run
+        # Do not reset weights when resuming from a checkpoint
         if cfg.get('pretrain_model') and not cfg.get('resume_model'):
             correction_heads = [
                 self.model.box_correction,
                 self.model.dim_correction,
                 self.model.depth_correction,
-                self.model.angle_correction
+                self.model.angle_correction,
+                self.model.class_correction
             ]
             for head in correction_heads:
 
-                # آخرین Linear را پیدا کن
                 linear_layers = [
                     m for m in head.modules()
                     if isinstance(m, nn.Linear)
@@ -118,6 +119,8 @@ class Trainer(object):
         # self.logger.info(f"Trainable Params : {trainable}")
         # self.logger.info(f"Frozen Params    : {total - trainable}")
         # self.logger.info("==========================================")
+
+
 
         trainable = 0
         for name,param in model.named_parameters():
