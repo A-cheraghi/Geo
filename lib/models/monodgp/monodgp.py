@@ -126,13 +126,13 @@ class MonoDGP(nn.Module):
 
 
 
-            self.fusion_mlp = nn.Sequential(
-                nn.Linear(hidden_dim * 2, hidden_dim * 2),
-                nn.ReLU(),
-                nn.Linear(hidden_dim * 2, hidden_dim),
-                nn.ReLU(),
-                nn.Linear(hidden_dim, hidden_dim)
-            )
+        self.fusion_mlp = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim * 2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim)
+        )
         self.class_correction = nn.Linear(hidden_dim, num_classes)
         self.box_correction = MLP(hidden_dim, hidden_dim, 6, 3)
         self.dim_correction = MLP(hidden_dim, hidden_dim, 3, 2)
