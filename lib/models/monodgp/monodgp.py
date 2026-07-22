@@ -300,7 +300,7 @@ class MonoDGP(nn.Module):
         out['pred_depth_map_logits'] = pred_depth_map_logits
         out['pred_region_prob'] = region_probs
 
-
+        box_logits = outputs_coord_logits[-1] #extra
 
 
         hs_2d_last = hs_2d[-1]
@@ -311,7 +311,6 @@ class MonoDGP(nn.Module):
 
         # box correction
         box_corr = self.box_correction(fusion_feature)
-        box_logits = outputs_coord_logits[-1]
         out['pred_boxes'] = (box_logits + box_corr).sigmoid()
 
         # dimension correction
