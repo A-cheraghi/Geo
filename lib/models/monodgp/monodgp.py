@@ -125,6 +125,16 @@ class MonoDGP(nn.Module):
 
 
 
+        #############################################################################################################
+        self.feat_adapter_2d = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        )
+
+        self.feat_adapter_3d = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        )
 
         self.fusion_mlp = nn.Sequential(
             nn.Linear(hidden_dim * 2, hidden_dim * 2),
@@ -138,9 +148,7 @@ class MonoDGP(nn.Module):
         self.dim_correction = MLP(hidden_dim, hidden_dim, 3, 2)
         self.angle_correction = MLP(hidden_dim, hidden_dim, 24, 2)        
         self.depth_correction = MLP(hidden_dim, hidden_dim, 2, 2)
-        
-
-
+        #############################################################################################################^
 
 
     def forward(self, images, calibs, targets, img_sizes, dn_args=None):
@@ -306,7 +314,12 @@ class MonoDGP(nn.Module):
         hs_2d_last = hs_2d[-1]
         hs_3d_last = hs[-1]
 
-        fusion = torch.cat([hs_2d_last, hs_3d_last], dim=-1)
+
+        feat_2d_adapted = self.feat_adapter_2d(hs_2d_last)
+        feat_3d_adapted = self.feat_adapter_3d(hs_3d_last)
+
+
+        fusion = torch.cat([feat_2d_adapted, feat_3d_adapted], dim=-1)
         fusion_feature = self.fusion_mlp(fusion)
 
         # box correction

@@ -46,6 +46,8 @@ class Trainer(object):
 
         # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
         train_modules = [
+            self.model.feat_adapter_2d,
+            self.model.feat_adapter_3d,
             self.model.fusion_mlp,
             self.model.box_correction,
             self.model.dim_correction,
