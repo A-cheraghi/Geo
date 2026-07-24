@@ -42,13 +42,13 @@ class Trainer(object):
         self.tester = None
 
         # loading pretrain/resume model
-        if cfg.get('pretrain_model'):
-            assert os.path.exists(cfg['pretrain_model'])
-            load_checkpoint(model=self.model,
-                            optimizer=None,
-                            filename=cfg['pretrain_model'],
-                            map_location=self.device,
-                            logger=self.logger)
+        # if cfg.get('pretrain_model'):
+        #     assert os.path.exists(cfg['pretrain_model'])
+        #     load_checkpoint(model=self.model,
+        #                     optimizer=None,
+        #                     filename=cfg['pretrain_model'],
+        #                     map_location=self.device,
+        #                     logger=self.logger)
 
         if cfg.get('resume_model', None):
             resume_model_path = os.path.join(self.output_dir, "checkpoint.pth")
@@ -61,46 +61,81 @@ class Trainer(object):
                 logger=self.logger)
             self.lr_scheduler.last_epoch = self.epoch - 1
             self.logger.info("Loading Checkpoint... Best Result:{}, Best Epoch:{}".format(self.best_result, self.best_epoch))
-        
-        
-        
-        # Freeze the whole pretrained network
-        for param in self.model.parameters():
-            param.requires_grad = False
 
-        # Enable training only for the correction network
-        train_modules = [
-            self.model.fusion_mlp,
-            self.model.box_correction,
-            self.model.dim_correction,
-            self.model.depth_correction,
-            self.model.angle_correction,
-            self.model.class_correction
-        ]
-        for module in train_modules:
-            for param in module.parameters():
-                param.requires_grad = True
 
-        # Initialize correction heads with zero output only for the first training run
-        # Do not reset weights when resuming from a checkpoint
-        if cfg.get('pretrain_model') and not cfg.get('resume_model'):
-            correction_heads = [
-                self.model.box_correction,
-                self.model.dim_correction,
-                self.model.depth_correction,
-                self.model.angle_correction,
-                self.model.class_correction
-            ]
-            for head in correction_heads:
 
-                linear_layers = [
-                    m for m in head.modules()
-                    if isinstance(m, nn.Linear)
-                ]
-                last_layer = linear_layers[-1]
-                nn.init.zeros_(last_layer.weight)
-                nn.init.zeros_(last_layer.bias)     
-            self.logger.info("Correction heads last layers weights and biases initialized to zero.")
+
+        self.print_trainable_parameters()
+
+
+    def print_trainable_parameters(self):
+        """
+        این متد دقیقاً بررسی می‌کند چه پارامترهایی وارد Optimizer شده‌اند
+        و تعداد کل پارامترهای قابل آموزش را گزارش می‌دهد.
+        """
+        self.logger.info("=" * 60)
+        self.logger.info("🔍 OPTIMIZER TRACKED PARAMETERS CHECK:")
+        self.logger.info("=" * 60)
+
+        # ساخت یک دیکشنری برای نگه‌داری نام پارامترها (جهت پرینت اسمِ لایه‌ها)
+        param_to_name = {p: name for name, p in self.model.named_parameters()}
+
+        total_trainable_params = 0
+        
+        # پیمایش پارامترهایی که واقعاً داخل Optimizer ثبت شده‌اند
+        for group_idx, param_group in enumerate(self.optimizer.param_groups):
+            self.logger.info(f"--- Parameter Group {group_idx} ---")
+            for p in param_group['params']:
+                if p in param_to_name:
+                    name = param_to_name[p]
+                    num_params = p.numel()
+                    total_trainable_params += num_params
+                    
+                    # بررسی و گزارش وضعیت requires_grad
+                    status = "TRAINABLE" if p.requires_grad else "FROZEN (WARNING!)"
+                    self.logger.info(f"[{status:9s}] {name:50s} | Params: {num_params:,}")
+
+        self.logger.info("-" * 60)
+        self.logger.info(f" Total Trainable Parameters in Optimizer: {total_trainable_params:,}")
+        self.logger.info("=" * 60)
+        
+        # # Freeze the whole pretrained network
+        # for param in self.model.parameters():
+        #     param.requires_grad = False
+
+        # # Enable training only for the correction network
+        # train_modules = [
+        #     self.model.fusion_mlp,
+        #     self.model.box_correction,
+        #     self.model.dim_correction,
+        #     self.model.depth_correction,
+        #     self.model.angle_correction,
+        #     self.model.class_correction
+        # ]
+        # for module in train_modules:
+        #     for param in module.parameters():
+        #         param.requires_grad = True
+
+        # # Initialize correction heads with zero output only for the first training run
+        # # Do not reset weights when resuming from a checkpoint
+        # if cfg.get('pretrain_model') and not cfg.get('resume_model'):
+        #     correction_heads = [
+        #         self.model.box_correction,
+        #         self.model.dim_correction,
+        #         self.model.depth_correction,
+        #         self.model.angle_correction,
+        #         self.model.class_correction
+        #     ]
+        #     for head in correction_heads:
+
+        #         linear_layers = [
+        #             m for m in head.modules()
+        #             if isinstance(m, nn.Linear)
+        #         ]
+        #         last_layer = linear_layers[-1]
+        #         nn.init.zeros_(last_layer.weight)
+        #         nn.init.zeros_(last_layer.bias)     
+        #     self.logger.info("Correction heads last layers weights and biases initialized to zero.")
 
 
         # self.logger.info("\n========== Trainable Parameters ==========")
@@ -122,13 +157,13 @@ class Trainer(object):
 
 
 
-        trainable = 0
-        for name,param in model.named_parameters():
-            if param.requires_grad:
-                self.logger.info(name)
-                trainable += param.numel()
+        # trainable = 0
+        # for name,param in model.named_parameters():
+        #     if param.requires_grad:
+        #         self.logger.info(name)
+        #         trainable += param.numel()
 
-        self.logger.info(trainable)
+        # self.logger.info(trainable)
 
 
         
