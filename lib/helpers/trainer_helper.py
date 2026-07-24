@@ -42,14 +42,39 @@ class Trainer(object):
         self.tester = None
 
         # loading pretrain/resume model
-        # if cfg.get('pretrain_model'):
-        #     assert os.path.exists(cfg['pretrain_model'])
-        #     load_checkpoint(model=self.model,
-        #                     optimizer=None,
-        #                     filename=cfg['pretrain_model'],
-        #                     map_location=self.device,
-        #                     logger=self.logger)
+        if cfg.get('pretrain_model'):
+            assert os.path.exists(cfg['pretrain_model'])
+            load_checkpoint(model=self.model,
+                            optimizer=None,
+                            filename=cfg['pretrain_model'],
+                            map_location=self.device,
+                            logger=self.logger)
+            #################################################################################################
+            for param in self.model.parameters():
+                param.requires_grad = False
 
+            # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
+            train_modules = [
+                self.model.fusion_mlp,
+                self.model.box_correction,
+                self.model.dim_correction,
+                self.model.depth_correction,
+                self.model.angle_correction,
+                self.model.class_correction
+            ]
+            for module in train_modules:
+                for param in module.parameters():
+                    param.requires_grad = True
+
+            # صفر کردن وزن و بایاس لایه آخر هدهای اصلاحی
+            for head in train_modules[1:]:  # شامل تمام هدهای correction
+                linear_layers = [m for m in head.modules() if isinstance(m, nn.Linear)]
+                if linear_layers:
+                    nn.init.zeros_(linear_layers[-1].weight)
+                    nn.init.zeros_(linear_layers[-1].bias)
+
+            self.logger.info("Pretrained model loaded, base frozen, and correction heads zero-initialized.")
+        #################################################################################################^
         if cfg.get('resume_model', None):
             resume_model_path = os.path.join(self.output_dir, "checkpoint.pth")
             assert os.path.exists(resume_model_path)
@@ -63,13 +88,26 @@ class Trainer(object):
             self.logger.info("Loading Checkpoint... Best Result:{}, Best Epoch:{}".format(self.best_result, self.best_epoch))
 
 
+        #################################################################################################
+        total_params = 0
+        trainable_params = 0
 
+        self.logger.info("=" * 65)
+        self.logger.info("Trainable Parameters:")
+        for name, param in self.model.named_parameters():
+            num_el = param.numel()
+            total_params += num_el
+            if param.requires_grad:
+                self.logger.info(f"  [TRAINABLE] {name:50s} | {num_el:,}")
+                trainable_params += num_el
 
-        
-
-
-
-#############################################################################################
+        frozen_params = total_params - trainable_params
+        self.logger.info("-" * 65)
+        self.logger.info(f"Total Parameters:     {total_params:,}")
+        self.logger.info(f"Frozen Parameters:    {frozen_params:,}")
+        self.logger.info(f"Trainable Parameters: {trainable_params:,}")
+        self.logger.info("=" * 65)
+        #############################################################################################################^
         # # Freeze the whole pretrained network
         # for param in self.model.parameters():
         #     param.requires_grad = False
@@ -107,71 +145,14 @@ class Trainer(object):
         #         nn.init.zeros_(last_layer.weight)
         #         nn.init.zeros_(last_layer.bias)     
         #     self.logger.info("Correction heads last layers weights and biases initialized to zero.")
-
-        #############################################################################################
-        # self.logger.info("\n========== Trainable Parameters ==========")
-        # total = 0
-        # trainable = 0
-        # for name, param in self.model.named_parameters():
-        #     num = param.numel()
-        #     total += num
-        #     if param.requires_grad:
-        #         trainable += num
-        #         self.logger.info(f"[Train] {name:60s} {tuple(param.shape)}")
-        #     else:
-        #         self.logger.info(f"[Freeze] {name:60s} {tuple(param.shape)}")
-        # self.logger.info("------------------------------------------")
-        # self.logger.info(f"Total Params     : {total}")
-        # self.logger.info(f"Trainable Params : {trainable}")
-        # self.logger.info(f"Frozen Params    : {total - trainable}")
-        # self.logger.info("==========================================")
-
-
-
+        # #############################################################################################################^
         # trainable = 0
         # for name,param in model.named_parameters():
         #     if param.requires_grad:
         #         self.logger.info(name)
         #         trainable += param.numel()
-
         # self.logger.info(trainable)
-
-        self.print_trainable_parameters()
-
-
-
-    def print_trainable_parameters(self):
-        """
-        این متد دقیقاً بررسی می‌کند چه پارامترهایی وارد Optimizer شده‌اند
-        و تعداد کل پارامترهای قابل آموزش را گزارش می‌دهد.
-        """
-        self.logger.info("=" * 60)
-        self.logger.info("🔍 OPTIMIZER TRACKED PARAMETERS CHECK:")
-        self.logger.info("=" * 60)
-
-        # ساخت یک دیکشنری برای نگه‌داری نام پارامترها (جهت پرینت اسمِ لایه‌ها)
-        param_to_name = {p: name for name, p in self.model.named_parameters()}
-
-        total_trainable_params = 0
-        
-        # پیمایش پارامترهایی که واقعاً داخل Optimizer ثبت شده‌اند
-        for group_idx, param_group in enumerate(self.optimizer.param_groups):
-            self.logger.info(f"--- Parameter Group {group_idx} ---")
-            for p in param_group['params']:
-                if p in param_to_name:
-                    name = param_to_name[p]
-                    num_params = p.numel()
-                    total_trainable_params += num_params
-                    
-                    # بررسی و گزارش وضعیت requires_grad
-                    status = "TRAINABLE" if p.requires_grad else "FROZEN (WARNING!)"
-                    self.logger.info(f"[{status:9s}] {name:50s} | Params: {num_params:,}")
-
-        self.logger.info("-" * 60)
-        self.logger.info(f" Total Trainable Parameters in Optimizer: {total_trainable_params:,}")
-        self.logger.info("=" * 60)
-        
-
+        #############################################################################################################^
 
         
     def train(self):

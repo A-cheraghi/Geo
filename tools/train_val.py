@@ -1,11 +1,9 @@
-from asyncio.log import logger
 import warnings
 warnings.filterwarnings("ignore")
 
 import os
 import sys
 import torch
-import torch.nn as nn
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -23,7 +21,7 @@ from lib.helpers.trainer_helper import Trainer
 from lib.helpers.tester_helper import Tester
 from lib.helpers.utils_helper import create_logger
 from lib.helpers.utils_helper import set_random_seed
-from lib.helpers.save_helper import load_checkpoint
+
 
 parser = argparse.ArgumentParser(description='Monocular 3D Object Detection with Decoupled-Query and Geometry-Error Priors')
 parser.add_argument('--config', dest='config', help='settings of detection in yaml format')
@@ -49,13 +47,6 @@ def main():
     # build model
     model, loss = build_model(cfg['model'])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-
-    setup_model_and_freeze(model, cfg['trainer'], device, logger)
-
-
-
     gpu_ids = list(map(int, cfg['trainer']['gpu_ids'].split(',')))
 
     if len(gpu_ids) == 1:
@@ -113,66 +104,6 @@ def main():
     logger.info('Split: %s' % (cfg['dataset']['test_split']))
 
     tester.test()
-
-
-
-
-
-
-
-
-
-
-def setup_model_and_freeze(model, cfg_trainer, device, logger):
-    # 1. Loading pretrain model (فقط اگر pretrain فعال باشد)
-    if cfg_trainer.get('pretrain_model'):
-        assert os.path.exists(cfg_trainer['pretrain_model'])
-        load_checkpoint(model=model,
-                        optimizer=None,
-                        filename=cfg_trainer['pretrain_model'],
-                        map_location=device,
-                        logger=logger)
-
-    # 2. Freeze the whole pretrained network
-    for param in model.parameters():
-        param.requires_grad = False
-
-    # 3. Enable training only for the correction network
-    train_modules = [
-        model.fusion_mlp,
-        model.box_correction,
-        model.dim_correction,
-        model.depth_correction,
-        model.angle_correction,
-        model.class_correction
-    ]
-    for module in train_modules:
-        for param in module.parameters():
-            param.requires_grad = True
-
-    # 4. Initialize correction heads with zero output only for the first training run
-    # (اگر حالت resume باشد این بخش اجرا نمی‌شود تا وزن‌های آموزش‌دیده پاک نشوند)
-    if cfg_trainer.get('pretrain_model') and not cfg_trainer.get('resume_model'):
-        correction_heads = [
-            model.box_correction,
-            model.dim_correction,
-            model.depth_correction,
-            model.angle_correction,
-            model.class_correction
-        ]
-        for head in correction_heads:
-            linear_layers = [
-                m for m in head.modules()
-                if isinstance(m, nn.Linear)
-            ]
-            last_layer = linear_layers[-1]
-            nn.init.zeros_(last_layer.weight)
-            nn.init.zeros_(last_layer.bias)     
-        logger.info("Correction heads last layers weights and biases initialized to zero.")
-
-
-
-
 
 
 if __name__ == '__main__':
