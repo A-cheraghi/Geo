@@ -40,10 +40,6 @@ class Trainer(object):
         self.model_name = model_name
         self.output_dir = os.path.join('./' + cfg['save_path'], model_name)
         self.tester = None
-
-
-
-
         #################################################################################################
         for param in self.model.parameters():
             param.requires_grad = False
@@ -90,7 +86,6 @@ class Trainer(object):
                 logger=self.logger)
             self.lr_scheduler.last_epoch = self.epoch - 1
             self.logger.info("Loading Checkpoint... Best Result:{}, Best Epoch:{}".format(self.best_result, self.best_epoch))
-
 
         #################################################################################################
         total_params = 0
@@ -193,8 +188,8 @@ class Trainer(object):
 
                 if self.tester is not None:
                     self.logger.info("Test Epoch {}".format(self.epoch))
-                    self.tester.inference()
-                    cur_result = self.tester.evaluate()
+                    # self.tester.inference()
+                    # cur_result = self.tester.evaluate()
                     if cur_result > best_result:
                         best_result = cur_result
                         best_epoch = self.epoch
