@@ -216,7 +216,7 @@ class Trainer(object):
 
             detr_losses.backward()
             self.optimizer.step()
-            break
+
             if batch_idx > 0 and batch_idx % 200 == 0:
                 progress_bar.update(200)
         progress_bar.close()
