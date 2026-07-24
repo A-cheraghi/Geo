@@ -41,6 +41,26 @@ class Trainer(object):
         self.output_dir = os.path.join('./' + cfg['save_path'], model_name)
         self.tester = None
 
+
+
+
+        #################################################################################################
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
+        train_modules = [
+            self.model.fusion_mlp,
+            self.model.box_correction,
+            self.model.dim_correction,
+            self.model.depth_correction,
+            self.model.angle_correction,
+            self.model.class_correction
+        ]
+        for module in train_modules:
+            for param in module.parameters():
+                param.requires_grad = True
+        #################################################################################################^       
         # loading pretrain/resume model
         if cfg.get('pretrain_model'):
             assert os.path.exists(cfg['pretrain_model'])
@@ -50,22 +70,6 @@ class Trainer(object):
                             map_location=self.device,
                             logger=self.logger)
             #################################################################################################
-            for param in self.model.parameters():
-                param.requires_grad = False
-
-            # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
-            train_modules = [
-                self.model.fusion_mlp,
-                self.model.box_correction,
-                self.model.dim_correction,
-                self.model.depth_correction,
-                self.model.angle_correction,
-                self.model.class_correction
-            ]
-            for module in train_modules:
-                for param in module.parameters():
-                    param.requires_grad = True
-
             # صفر کردن وزن و بایاس لایه آخر هدهای اصلاحی
             for head in train_modules[1:]:  # شامل تمام هدهای correction
                 linear_layers = [m for m in head.modules() if isinstance(m, nn.Linear)]
@@ -74,7 +78,7 @@ class Trainer(object):
                     nn.init.zeros_(linear_layers[-1].bias)
 
             self.logger.info("Pretrained model loaded, base frozen, and correction heads zero-initialized.")
-        #################################################################################################^
+        #################################################################################################^       
         if cfg.get('resume_model', None):
             resume_model_path = os.path.join(self.output_dir, "checkpoint.pth")
             assert os.path.exists(resume_model_path)
