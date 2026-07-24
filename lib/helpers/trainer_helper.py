@@ -41,21 +41,21 @@ class Trainer(object):
         self.output_dir = os.path.join('./' + cfg['save_path'], model_name)
         self.tester = None
         #################################################################################################
-        for param in self.model.parameters():
-            param.requires_grad = False
+        # for param in self.model.parameters():
+        #     param.requires_grad = False
 
-        # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
-        train_modules = [
-            self.model.fusion_mlp,
-            self.model.box_correction,
-            self.model.dim_correction,
-            self.model.depth_correction,
-            self.model.angle_correction,
-            self.model.class_correction
-        ]
-        for module in train_modules:
-            for param in module.parameters():
-                param.requires_grad = True
+        # # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
+        # train_modules = [
+        #     self.model.fusion_mlp,
+        #     self.model.box_correction,
+        #     self.model.dim_correction,
+        #     self.model.depth_correction,
+        #     self.model.angle_correction,
+        #     self.model.class_correction
+        # ]
+        # for module in train_modules:
+        #     for param in module.parameters():
+        #         param.requires_grad = True
         #################################################################################################^       
         # loading pretrain/resume model
         if cfg.get('pretrain_model'):
