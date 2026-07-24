@@ -123,8 +123,6 @@ class MonoDGP(nn.Module):
             self.depth_embed = nn.ModuleList([self.depth_embed for _ in range(num_pred)])
             self.depthaware_transformer.decoder.bbox_embed = None
 
-
-
         #############################################################################################################
         self.feat_adapter_2d = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
@@ -310,14 +308,11 @@ class MonoDGP(nn.Module):
         #############################################################################################################
         box_logits = outputs_coord_logits[-1] #extra
         #############################################################################################################^
-
         hs_2d_last = hs_2d[-1]
         hs_3d_last = hs[-1]
 
-
         feat_2d_adapted = self.feat_adapter_2d(hs_2d_last)
         feat_3d_adapted = self.feat_adapter_3d(hs_3d_last)
-
 
         fusion = torch.cat([feat_2d_adapted, feat_3d_adapted], dim=-1)
         fusion_feature = self.fusion_mlp(fusion)
