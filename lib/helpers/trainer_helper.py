@@ -65,7 +65,7 @@ class Trainer(object):
 
 
 
-        self.print_trainable_parameters()
+        
 
 
     def print_trainable_parameters(self):
@@ -99,44 +99,47 @@ class Trainer(object):
         self.logger.info(f" Total Trainable Parameters in Optimizer: {total_trainable_params:,}")
         self.logger.info("=" * 60)
         
-        # # Freeze the whole pretrained network
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
+        # Freeze the whole pretrained network
+        for param in self.model.parameters():
+            param.requires_grad = False
 
-        # # Enable training only for the correction network
-        # train_modules = [
-        #     self.model.fusion_mlp,
-        #     self.model.box_correction,
-        #     self.model.dim_correction,
-        #     self.model.depth_correction,
-        #     self.model.angle_correction,
-        #     self.model.class_correction
-        # ]
-        # for module in train_modules:
-        #     for param in module.parameters():
-        #         param.requires_grad = True
+        # Enable training only for the correction network
+        train_modules = [
+            self.model.fusion_mlp,
+            self.model.box_correction,
+            self.model.dim_correction,
+            self.model.depth_correction,
+            self.model.angle_correction,
+            self.model.class_correction
+        ]
+        for module in train_modules:
+            for param in module.parameters():
+                param.requires_grad = True
 
-        # # Initialize correction heads with zero output only for the first training run
-        # # Do not reset weights when resuming from a checkpoint
-        # if cfg.get('pretrain_model') and not cfg.get('resume_model'):
-        #     correction_heads = [
-        #         self.model.box_correction,
-        #         self.model.dim_correction,
-        #         self.model.depth_correction,
-        #         self.model.angle_correction,
-        #         self.model.class_correction
-        #     ]
-        #     for head in correction_heads:
+        # Initialize correction heads with zero output only for the first training run
+        # Do not reset weights when resuming from a checkpoint
+        if cfg.get('pretrain_model') and not cfg.get('resume_model'):
+            correction_heads = [
+                self.model.box_correction,
+                self.model.dim_correction,
+                self.model.depth_correction,
+                self.model.angle_correction,
+                self.model.class_correction
+            ]
+            for head in correction_heads:
 
-        #         linear_layers = [
-        #             m for m in head.modules()
-        #             if isinstance(m, nn.Linear)
-        #         ]
-        #         last_layer = linear_layers[-1]
-        #         nn.init.zeros_(last_layer.weight)
-        #         nn.init.zeros_(last_layer.bias)     
-        #     self.logger.info("Correction heads last layers weights and biases initialized to zero.")
+                linear_layers = [
+                    m for m in head.modules()
+                    if isinstance(m, nn.Linear)
+                ]
+                last_layer = linear_layers[-1]
+                nn.init.zeros_(last_layer.weight)
+                nn.init.zeros_(last_layer.bias)     
+            self.logger.info("Correction heads last layers weights and biases initialized to zero.")
 
+
+
+        self.print_trainable_parameters()
 
         # self.logger.info("\n========== Trainable Parameters ==========")
         # total = 0

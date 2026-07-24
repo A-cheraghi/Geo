@@ -52,7 +52,7 @@ def main():
 
 
 
-    setup_model_and_freeze(model, cfg['trainer'], device, logger)
+    # setup_model_and_freeze(model, cfg['trainer'], device, logger)
 
 
 
