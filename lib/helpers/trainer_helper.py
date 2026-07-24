@@ -69,7 +69,7 @@ class Trainer(object):
                             logger=self.logger)
             #################################################################################################
             # صفر کردن وزن و بایاس لایه آخر هدهای اصلاحی
-            for head in train_modules[1:]:  # شامل تمام هدهای correction
+            for head in train_modules[3:]:  # شامل تمام هدهای correction
                 linear_layers = [m for m in head.modules() if isinstance(m, nn.Linear)]
                 if linear_layers:
                     nn.init.zeros_(linear_layers[-1].weight)
