@@ -186,18 +186,18 @@ class Trainer(object):
                     get_checkpoint_state(self.model, self.optimizer, self.epoch, best_result, best_epoch),
                     ckpt_name)
 
-                if self.tester is not None:
-                    self.logger.info("Test Epoch {}".format(self.epoch))
-                    # self.tester.inference()
-                    # cur_result = self.tester.evaluate()
-                    if cur_result > best_result:
-                        best_result = cur_result
-                        best_epoch = self.epoch
-                        ckpt_name = os.path.join(self.output_dir, 'checkpoint_best')
-                        save_checkpoint(
-                            get_checkpoint_state(self.model, self.optimizer, self.epoch, best_result, best_epoch),
-                            ckpt_name)
-                    self.logger.info("Best Result:{}, epoch:{}".format(best_result, best_epoch))
+                # if self.tester is not None:
+                #     self.logger.info("Test Epoch {}".format(self.epoch))
+                #     self.tester.inference()
+                #     cur_result = self.tester.evaluate()
+                #     if cur_result > best_result:
+                #         best_result = cur_result
+                #         best_epoch = self.epoch
+                #         ckpt_name = os.path.join(self.output_dir, 'checkpoint_best')
+                #         save_checkpoint(
+                #             get_checkpoint_state(self.model, self.optimizer, self.epoch, best_result, best_epoch),
+                #             ckpt_name)
+                #     self.logger.info("Best Result:{}, epoch:{}".format(best_result, best_epoch))
 
             progress_bar.update()
 
