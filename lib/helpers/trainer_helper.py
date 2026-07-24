@@ -210,7 +210,7 @@ class Trainer(object):
         self.model.train()
         print(">>>>>>> Epoch:", str(epoch) + ":")
 
-        progress_bar = tqdm.tqdm(total=len(self.train_loader), leave=(self.epoch+1 == self.cfg['max_epoch']), desc='iters')
+        progress_bar = tqdm.tqdm(total=len(self.train_loader-460), leave=(self.epoch+1 == self.cfg['max_epoch']), desc='iters')
         for batch_idx, (inputs, calibs, targets, info) in enumerate(self.train_loader):
             inputs = inputs.to(self.device)
             calibs = calibs.to(self.device)
