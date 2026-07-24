@@ -248,13 +248,13 @@ class MonoDGP(nn.Module):
             # 3d center + 2d box
             # outputs_coord = tmp.sigmoid()
             # outputs_coords.append(outputs_coord)
-
+            #############################################################################################################
             outputs_coord_logits = tmp
             outputs_coord = tmp.sigmoid()
 
             outputs_coords.append(outputs_coord)
             outputs_coord_logits_list.append(outputs_coord_logits)
-
+            #############################################################################################################^
             # classes
             outputs_class = self.class_embed[lvl](hs[lvl])
             outputs_classes.append(outputs_class)
@@ -282,10 +282,10 @@ class MonoDGP(nn.Module):
             outputs_angles.append(outputs_angle)
 
         # outputs_coord = torch.stack(outputs_coords)
-
+        #############################################################################################################
         outputs_coord = torch.stack(outputs_coords)
         outputs_coord_logits = torch.stack(outputs_coord_logits_list)
-
+        #############################################################################################################^
         outputs_class = torch.stack(outputs_classes)
         outputs_3d_dim = torch.stack(outputs_3d_dims)
         outputs_depth = torch.stack(outputs_depths) 
@@ -299,9 +299,9 @@ class MonoDGP(nn.Module):
         out['pred_angle'] = outputs_angle[-1]
         out['pred_depth_map_logits'] = pred_depth_map_logits
         out['pred_region_prob'] = region_probs
-
+        #############################################################################################################
         box_logits = outputs_coord_logits[-1] #extra
-
+        #############################################################################################################^
 
         hs_2d_last = hs_2d[-1]
         hs_3d_last = hs[-1]
@@ -328,7 +328,7 @@ class MonoDGP(nn.Module):
         # class correction
         class_corr = self.class_correction(fusion_feature)
         out['pred_logits'] = out['pred_logits'] + class_corr
-
+        #############################################################################################################^
 
 
 
