@@ -2,7 +2,7 @@ random_seed: 444
 
 dataset:
   type: &dataset_type 'KITTI'
-  root_dir: '/content/Geo/data/kitti'
+  root_dir: '../data/kitti'
   train_split: 'train'
   test_split: 'val'
   batch_size: 8
@@ -109,7 +109,7 @@ trainer:
   gpu_ids: '1'
   save_frequency: 1  # checkpoint save interval (in epoch)
   # resume_model: True
-  pretrain_model: 'outputs/monodgp/checkpoint_best.pth'
+  pretrain_model: '../outputs/monodgp/checkpoint_best.pth'
   save_path: '../drive/MyDrive/outputs'
   save_all: False  # False for only savng the best and latest ckpts
   use_dn: False
