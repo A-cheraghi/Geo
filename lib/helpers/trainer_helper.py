@@ -41,21 +41,21 @@ class Trainer(object):
         self.output_dir = os.path.join('./' + cfg['save_path'], model_name)
         self.tester = None
         #################################################################################################
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
+        for param in self.model.parameters():
+            param.requires_grad = False
 
-        # # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
-        # train_modules = [
-        #     self.model.fusion_mlp,
-        #     self.model.box_correction,
-        #     self.model.dim_correction,
-        #     self.model.depth_correction,
-        #     self.model.angle_correction,
-        #     self.model.class_correction
-        # ]
-        # for module in train_modules:
-        #     for param in module.parameters():
-        #         param.requires_grad = True
+        # فعال کردن آموزش فقط برای ماژول‌های اصلاحی
+        train_modules = [
+            self.model.fusion_mlp,
+            self.model.box_correction,
+            self.model.dim_correction,
+            self.model.depth_correction,
+            self.model.angle_correction,
+            self.model.class_correction
+        ]
+        for module in train_modules:
+            for param in module.parameters():
+                param.requires_grad = True
         #################################################################################################^       
         # loading pretrain/resume model
         if cfg.get('pretrain_model'):
@@ -108,52 +108,7 @@ class Trainer(object):
         self.logger.info(f"Trainable Parameters: {trainable_params:,}")
         self.logger.info("=" * 65)
         #############################################################################################################^
-        # # Freeze the whole pretrained network
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
-
-        # # Enable training only for the correction network
-        # train_modules = [
-        #     self.model.fusion_mlp,
-        #     self.model.box_correction,
-        #     self.model.dim_correction,
-        #     self.model.depth_correction,
-        #     self.model.angle_correction,
-        #     self.model.class_correction
-        # ]
-        # for module in train_modules:
-        #     for param in module.parameters():
-        #         param.requires_grad = True
-
-        # # Initialize correction heads with zero output only for the first training run
-        # # Do not reset weights when resuming from a checkpoint
-        # if cfg.get('pretrain_model') and not cfg.get('resume_model'):
-        #     correction_heads = [
-        #         self.model.box_correction,
-        #         self.model.dim_correction,
-        #         self.model.depth_correction,
-        #         self.model.angle_correction,
-        #         self.model.class_correction
-        #     ]
-        #     for head in correction_heads:
-
-        #         linear_layers = [
-        #             m for m in head.modules()
-        #             if isinstance(m, nn.Linear)
-        #         ]
-        #         last_layer = linear_layers[-1]
-        #         nn.init.zeros_(last_layer.weight)
-        #         nn.init.zeros_(last_layer.bias)     
-        #     self.logger.info("Correction heads last layers weights and biases initialized to zero.")
-        # #############################################################################################################^
-        # trainable = 0
-        # for name,param in model.named_parameters():
-        #     if param.requires_grad:
-        #         self.logger.info(name)
-        #         trainable += param.numel()
-        # self.logger.info(trainable)
-        #############################################################################################################^
-
+        
         
     def train(self):
         start_epoch = self.epoch
