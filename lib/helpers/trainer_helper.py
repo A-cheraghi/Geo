@@ -116,7 +116,8 @@ class Trainer(object):
         start_epoch = self.epoch
 
         # progress_bar = tqdm.tqdm(range(start_epoch, self.cfg['max_epoch']), dynamic_ncols=True, leave=True, desc='epochs')
-        progress_bar = tqdm.tqdm(range(start_epoch, self.cfg['max_epoch']), dynamic_ncols=True, leave=True, desc='epochs')
+        progress_bar = tqdm.tqdm(total=self.cfg['max_epoch'], initial=start_epoch, dynamic_ncols=True, leave=True, desc='epochs')
+
         best_result = self.best_result
         best_epoch = self.best_epoch
         for epoch in range(start_epoch, self.cfg['max_epoch']):
