@@ -115,6 +115,7 @@ class Trainer(object):
     def train(self):
         start_epoch = self.epoch
 
+        # progress_bar = tqdm.tqdm(range(start_epoch, self.cfg['max_epoch']), dynamic_ncols=True, leave=True, desc='epochs')
         progress_bar = tqdm.tqdm(range(start_epoch, self.cfg['max_epoch']), dynamic_ncols=True, leave=True, desc='epochs')
         best_result = self.best_result
         best_epoch = self.best_epoch
