@@ -125,14 +125,15 @@ class MonoDGP(nn.Module):
 
         #############################################################################################################
         self.feat_adapter_2d = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim * 2, hidden_dim),
             nn.GELU()
         )
 
         self.feat_adapter_3d = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim * 2, hidden_dim),
             nn.GELU()
         )
+
 
         self.fusion_mlp = nn.Sequential(
             nn.Linear(hidden_dim * 2, hidden_dim * 2),
@@ -310,17 +311,13 @@ class MonoDGP(nn.Module):
         #############################################################################################################
         box_logits = outputs_coord_logits[-1] #extra
         #############################################################################################################^
-        hs_2d_last = hs_2d[-1]
-        hs_3d_last = hs[-1]
+        hs_2d_last2 = torch.cat([hs_2d[-2], hs_2d[-1]], dim=-1)
+        hs_3d_last2 = torch.cat([hs[-2], hs[-1]], dim=-1)
 
-        # feat_2d_adapted = self.feat_adapter_2d(hs_2d_last)
-        # feat_3d_adapted = self.feat_adapter_3d(hs_3d_last)
 
-        # fusion = torch.cat([feat_2d_adapted, feat_3d_adapted], dim=-1)
-        # fusion_feature = self.fusion_mlp(fusion)
+        feat_2d_refined = self.feat_adapter_2d(hs_2d_last2)
+        feat_3d_refined = self.feat_adapter_3d(hs_3d_last2)
 
-        feat_2d_refined = hs_2d_last + self.feat_adapter_2d(hs_2d_last)
-        feat_3d_refined = hs_3d_last + self.feat_adapter_3d(hs_3d_last)
 
         fusion_input = torch.cat([feat_2d_refined, feat_3d_refined], dim=-1)
         fusion_feature = self.fusion_mlp(fusion_input)
