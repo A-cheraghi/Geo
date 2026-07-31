@@ -100,12 +100,12 @@ lr_scheduler:
   warmup: True  # 5 epoches, cosine warmup, init_lir=0.00001 in default
   decay_rate: 0.5
   # decay_list: [85, 125, 165, 205]
-  decay_list: [41, 120]
+  decay_list: [20, 35]
 
 
 trainer:
   # max_epoch: 250
-  max_epoch: 150
+  max_epoch: 50
   gpu_ids: '1'
   save_frequency: 1  # checkpoint save interval (in epoch)
   resume_model: True
