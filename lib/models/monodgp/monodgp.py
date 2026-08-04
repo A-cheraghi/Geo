@@ -343,78 +343,78 @@ class MonoDGP(nn.Module):
         out['pred_logits'] = out['pred_logits'] + class_corr
 
 
-        import os
-        import csv
+        # import os
+        # import csv
 
-        save_path = "correction_values.csv"
-
-
-        # انتقال به CPU برای جلوگیری از درگیر شدن GPU
-        box_save = box_corr.detach().cpu()
-        dim_save = dim_corr.detach().cpu()
-        depth_save = depth_corr.detach().cpu()
-        angle_save = angle_corr.detach().cpu()
-        class_save = class_corr.detach().cpu()
+        # save_path = "correction_values.csv"
 
 
-        # تعداد کلاس‌ها
-        num_classes = class_save.shape[-1]
+        # # انتقال به CPU برای جلوگیری از درگیر شدن GPU
+        # box_save = box_corr.detach().cpu()
+        # dim_save = dim_corr.detach().cpu()
+        # depth_save = depth_corr.detach().cpu()
+        # angle_save = angle_corr.detach().cpu()
+        # class_save = class_corr.detach().cpu()
 
 
-        # ساخت header فقط بار اول
-        file_exists = os.path.isfile(save_path)
-
-        with open(save_path, "a", newline="") as f:
-
-            writer = csv.writer(f)
-
-            if not file_exists:
-
-                header = []
-
-                # box: 6
-                header += [f"box_{i}" for i in range(6)]
-
-                # dimension: 3
-                header += [f"dim_{i}" for i in range(3)]
-
-                # depth: 2
-                header += ["depth_value_corr",
-                        "depth_uncertainty_corr"]
-
-                # angle: 24
-                header += [f"angle_{i}" for i in range(24)]
-
-                # class
-                header += [f"class_{i}" for i in range(num_classes)]
-
-                writer.writerow(header)
+        # # تعداد کلاس‌ها
+        # num_classes = class_save.shape[-1]
 
 
-            # batch size
-            batch_size = box_save.shape[0]
+        # # ساخت header فقط بار اول
+        # file_exists = os.path.isfile(save_path)
 
-            # هر batch چند prediction دارد
-            for b in range(batch_size):
+        # with open(save_path, "a", newline="") as f:
 
-                row = []
+        #     writer = csv.writer(f)
 
-                # box correction
-                row += box_save[b].flatten().tolist()
+        #     if not file_exists:
 
-                # dimension correction
-                row += dim_save[b].flatten().tolist()
+        #         header = []
 
-                # depth correction
-                row += depth_save[b].flatten().tolist()
+        #         # box: 6
+        #         header += [f"box_{i}" for i in range(6)]
 
-                # angle correction
-                row += angle_save[b].flatten().tolist()
+        #         # dimension: 3
+        #         header += [f"dim_{i}" for i in range(3)]
 
-                # class correction
-                row += class_save[b].flatten().tolist()
+        #         # depth: 2
+        #         header += ["depth_value_corr",
+        #                 "depth_uncertainty_corr"]
 
-                writer.writerow(row)
+        #         # angle: 24
+        #         header += [f"angle_{i}" for i in range(24)]
+
+        #         # class
+        #         header += [f"class_{i}" for i in range(num_classes)]
+
+        #         writer.writerow(header)
+
+
+        #     # batch size
+        #     batch_size = box_save.shape[0]
+
+        #     # هر batch چند prediction دارد
+        #     for b in range(batch_size):
+
+        #         row = []
+
+        #         # box correction
+        #         row += box_save[b].flatten().tolist()
+
+        #         # dimension correction
+        #         row += dim_save[b].flatten().tolist()
+
+        #         # depth correction
+        #         row += depth_save[b].flatten().tolist()
+
+        #         # angle correction
+        #         row += angle_save[b].flatten().tolist()
+
+        #         # class correction
+        #         row += class_save[b].flatten().tolist()
+
+        #         writer.writerow(row)
         #############################################################################################################^
 
 
